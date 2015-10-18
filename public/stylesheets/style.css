@@ -6,3 +6,12 @@ body {
 a {
   color: #00B7FF;
 }
+.map {
+    color: red;
+    float: right;
+}
+
+.key {
+    color: blue;
+    float: left;
+}
