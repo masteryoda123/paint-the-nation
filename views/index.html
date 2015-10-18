@@ -2,107 +2,145 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>D3 Test</title>
+    <title> Presidential Candidates | Twitter Sentiment Analysis </title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+
     <script type="text/javascript" src="../maps/states_hash.json"></script>
     <script type="text/javascript" src="../maps/topojson.min.js"></script>
     <script type="text/javascript" src="../d3/d3.v3.js"></script>
     <script src="../maps/datamaps.all.min.js"></script>
-    <div id="us_map" style="position: relative; width: 500px; height: 300px;"></div>
-    <script type="text/javascript">
 
-    var countryWideTweets = {};
-    
-    //v is [sentiment tweetNum]
-    //dependent on global variable country wide record of tweets by candidate
-    var calcColor = function (v, totalTweets) {
-	    var weighted_sentiment = v[0] * (v[1] / totalTweets);
-	    return Math.round(128 + (127 * weighted_sentiment));
-    };
-
-    //calculate the alpha based on ratio of tweets coming from the state
-    var calcAlpha = function (v, totalStateTweets, totalCCountryTweets) {
-	    return .8 + (totalStateTweets / totalCCountryTweets);
-    };
-    
-    
-    //apply color change based on state-wide sentiment
-    //totalCCountryTweets: some integer of tweets n
-    //dp [[sentimentA tweetsA][sentimentB tweetsB][sentimentC tweetsC]]
-    var calcStateAttr = function (totalCCountryTweets, dp) {
-	    var totalTweets = dp.reduce((prv, cur, i, a) => prv + cur[1], 0);
-	    //attrs is [color, alpha]|| we dont need alpha in every vector lol fuck u lucas
-	    var attrs = dp.map(v => [calcColor(v, totalTweets),
-	            calcAlpha(v, totalTweets, totalCCountryTweets)]);
-
-	    var retStr = 'rgba(';
-	    for (var i = 0; i < 3; i++) {
-		    if (i < attrs.length) {
-			    retStr += "" + attrs[i][0] + ",";
-		    } else {
-			    retStr += "0,";
-		    }
-	    }
-	    //append one of the many unnecessary alpha values :)
-	    retStr += "" + attrs[0][1] + ")";
-	    return retStr};
-     
-    //loading in states, getting the keys, then reassigning values... no good
-    var generate_candidate_state_info = function () {
-	    return states.reduce(
-		    function(prevval, curval, index, array) {
-			    var sentiment = Math.random() * 2 - 1;
-			    var tweetNum  = Math.random() * 40 + 10;
-			    var datapoint = {sentiment: sentiment,
-		 		    tweetNum: tweetNum};
-			    //generate rand vals [-1,1]
-			    prevval[curval] = datapoint;
-			    return prevval;
-		    }, {})};
-    
-    //create 3 test candidates
-    //should not rely on 'implicit' ordering. How do I specify?
-    //out|| state: {sent: 0.0 tweetNum: 100}
-    var candidate1 = generate_candidate_state_info();
-    var candidate2 = generate_candidate_state_info();
-    var candidate3 = generate_candidate_state_info();
-
-    //takes in vector of candidates
-    //vector[  vector of candidate infos ->[state [] [] []] ...   ]
-    var createStateCandidateInfoList = function (candidate_vec) {
-	    //reduce to a new vector that contains our candidate info
-	    var infoByC = [];
-	    states.forEach(function(cur, ind, arr) {
-		    //for each state grab the corresponding data from each candidat
-		    var stateVec = [];
-		    candidate_vec.map(function(c) {
-			    stateVec.push([c[cur].sentiment, c[cur].tweetNum]);});
-		    //[state [] [] []]
-		    infoByC.push([cur, stateVec]);
-	    });
-	    return infoByC;
-    };
-    
-    var state_info = createStateCandidateInfoList([candidate1, candidate2, candidate3]);
-    //in [state [] [] []]
-    //out {AL: rgba() ...}
-    var state_colors = {};
-    state_info.forEach(function(cur) {
-	    return state_colors[cur[0]]=calcStateAttr.bind(undefined, 400)(cur[1]);
-    }, {});
-    //create java object of state name: rgb values 
-    
-    //specify -fill by state-
-    var map = new Datamap({
-	    element: document.getElementById('us_map'),
-	    scope: 'usa',
-	    fills: {defaultFill: "rgba(127,127,127,0.0)"}});
-
-    //console.log(state_colorsA);
-    map.updateChoropleth(state_colors);
-    map.legend();
-    
-    </script>
   </head>
   <body>
+      <section>
+          <div class="row title-bar">
+              <h1 class="title">
+                  Presidential Candidate Tweet Sentiment Analysis
+              </h1>
+          </div>
+          <div class="row large-row">
+              <div class="row key">
+                  <p class="key-title"> Candidates </p>
+                  <div class="checkbox">
+                      <label>
+                          <input type="checkbox">Sanders
+                      </label>
+                      <label>
+                          <input type="checkbox">Clinton
+                      </label>
+                      <label>
+                          <input type="checkbox">Trump
+                      </label>
+                      <label>
+                          <input type="checkbox">Carson
+                      </label>
+                  </div>
+                  <button type="submit" class="btn btn-default key-btn">Submit</button>
+
+              </div>
+              <div class="row map" id="us_map" style="width: 1000px; height: 600px; margin-right: 80px;"></div>
+              <script type="text/javascript">
+
+              var countryWideTweets = {};
+
+              //v is [sentiment tweetNum]
+              //dependent on global variable country wide record of tweets by candidate
+              var calcColor = function (v, totalTweets) {
+                  var weighted_sentiment = v[0] * (v[1] / totalTweets);
+                  return Math.round(128 + (127 * weighted_sentiment));
+              };
+
+              //calculate the alpha based on ratio of tweets coming from the state
+              var calcAlpha = function (v, totalStateTweets, totalCCountryTweets) {
+                  return .8 + (totalStateTweets / totalCCountryTweets);
+              };
+
+
+              //apply color change based on state-wide sentiment
+              //totalCCountryTweets: some integer of tweets n
+              //dp [[sentimentA tweetsA][sentimentB tweetsB][sentimentC tweetsC]]
+              var calcStateAttr = function (totalCCountryTweets, dp) {
+                  var totalTweets = dp.reduce((prv, cur, i, a) => prv + cur[1], 0);
+                  //attrs is [color, alpha]|| we dont need alpha in every vector lol fuck u lucas
+                  var attrs = dp.map(v => [calcColor(v, totalTweets),
+                          calcAlpha(v, totalTweets, totalCCountryTweets)]);
+
+                  var retStr = 'rgba(';
+                  for (var i = 0; i < 3; i++) {
+                      if (i < attrs.length) {
+                          retStr += "" + attrs[i][0] + ",";
+                      } else {
+                          retStr += "0,";
+                      }
+                  }
+                  //append one of the many unnecessary alpha values :)
+                  retStr += "" + attrs[0][1] + ")";
+                  return retStr};
+
+              //loading in states, getting the keys, then reassigning values... no good
+              var generate_candidate_state_info = function () {
+                  return states.reduce(
+                      function(prevval, curval, index, array) {
+                          var sentiment = Math.random() * 2 - 1;
+                          var tweetNum  = Math.random() * 40 + 10;
+                          var datapoint = {sentiment: sentiment,
+                               tweetNum: tweetNum};
+                          //generate rand vals [-1,1]
+                          prevval[curval] = datapoint;
+                          return prevval;
+                      }, {})};
+
+              //create 3 test candidates
+              //should not rely on 'implicit' ordering. How do I specify?
+              //out|| state: {sent: 0.0 tweetNum: 100}
+              var candidate1 = generate_candidate_state_info();
+              var candidate2 = generate_candidate_state_info();
+              var candidate3 = generate_candidate_state_info();
+
+              //takes in vector of candidates
+              //vector[  vector of candidate infos ->[state [] [] []] ...   ]
+              var createStateCandidateInfoList = function (candidate_vec) {
+                  //reduce to a new vector that contains our candidate info
+                  var infoByC = [];
+                  states.forEach(function(cur, ind, arr) {
+                      //for each state grab the corresponding data from each candidat
+                      var stateVec = [];
+                      candidate_vec.map(function(c) {
+                          stateVec.push([c[cur].sentiment, c[cur].tweetNum]);});
+                      //[state [] [] []]
+                      infoByC.push([cur, stateVec]);
+                  });
+                  return infoByC;
+              };
+
+              var state_info = createStateCandidateInfoList([candidate1, candidate2, candidate3]);
+              //in [state [] [] []]
+              //out {AL: rgba() ...}
+              var state_colors = {};
+              state_info.forEach(function(cur) {
+                  return state_colors[cur[0]]=calcStateAttr.bind(undefined, 400)(cur[1]);
+              }, {});
+              //create java object of state name: rgb values
+
+              //specify -fill by state-
+              var map = new Datamap({
+                  element: document.getElementById('us_map'),
+                  scope: 'usa',
+                  fills: {defaultFill: "rgba(127,127,127,0.0)"}});
+
+              //console.log(state_colorsA);
+              map.updateChoropleth(state_colors);
+              map.legend();
+
+              </script>
+          </div>
+      </section>
   </body>
 </html>

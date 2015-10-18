@@ -31,6 +31,8 @@ label {
 
 .key {
     margin-top: 20px;
+    margin-left: 10px;
+    padding-left: 8px;
     background: rgb(181, 38, 38);
 }
 
@@ -47,6 +49,8 @@ label {
     left: 50%;
     margin: 15px;
 }
+
+
 
 h1 {
     color: rgb(240, 240, 240);
